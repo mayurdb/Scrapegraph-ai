@@ -6,6 +6,7 @@ from typing import List, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_transformers import Html2TextTransformer
 from .base_node import BaseNode
+from langchain_core.documents import Document
 
 
 class ParseNode(BaseNode):
@@ -56,17 +57,35 @@ class ParseNode(BaseNode):
         # Fetching data from the state based on the input keys
         input_data = [state[key] for key in input_keys]
 
-        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        # text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        #     chunk_size=self.node_config.get("chunk_size", 4096),
+        #     chunk_overlap=0,
+        # )
+        text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.node_config.get("chunk_size", 4096),
             chunk_overlap=0,
         )
 
         # Parse the document
+        print(input_data[0])
         docs_transformed = Html2TextTransformer(
         ).transform_documents(input_data[0])[0]
+        print(docs_transformed)
 
-        chunks = text_splitter.split_text(docs_transformed.page_content)
-
+        # chunks = text_splitter.split_text(docs_transformed.page_content)
+        # chunks = text_splitter.split_text(input_data[0][0].page_content)
+        chunks = text_splitter.split_documents(docs_transformed)
+        print(docs_transformed.page_content)
+        print(len(chunks))
+        print(len(docs_transformed.page_content))
+        print(">>>>>>>>")
+        for chunk in chunks:
+            print("@@@@@@@")
+            print(chunk)
+            print("!!!!!!")
+            docs_transformed = Html2TextTransformer().transform_documents([Document(chunk)])
+            print(docs_transformed)
+            print("@@@@@@@")
         state.update({self.output[0]: chunks})
 
         return state
